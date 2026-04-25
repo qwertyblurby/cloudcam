@@ -1,5 +1,93 @@
 # Cloudinary React SDK Patterns & Common Errors
 
+---
+
+# Browser Virtual Camera App Rules (Vanilla JS Mode)
+
+When the user is building the browser-based virtual camera and publishing app in this repo, apply these rules in addition to Cloudinary guidance.
+
+## Scope and Stack
+
+- App style: vanilla JavaScript with ES modules only.
+- Do not introduce frameworks (no React, no jQuery, no Vue, no Angular).
+- Preferred runtime stack:
+  - Three.js (npm) for 3D WebGL effects
+  - Canvas 2D API for 2D effects and compositing
+  - Web Audio API for mic/audio reactivity
+  - MediaRecorder API for recording
+  - Cloudinary REST API for upload/transformation/delivery
+  - Cloudinary Video Player SDK for playback
+
+## Core Architecture
+
+- One master output canvas owns all rendering: `<canvas id="output-canvas">`.
+- Effects must use this interface exactly:
+  - `name`
+  - `init(canvas, analyser)`
+  - `render(ctx, videoEl, dt)`
+  - `destroy()`
+- `compositor.js` owns the RAF loop and invokes active effects in order.
+- Virtual camera path must use `outputCanvas.captureStream(30)`.
+- Publish/record path must record the same canvas stream with `MediaRecorder`.
+- Never hardcode Cloudinary credentials.
+- Keep Cloudinary credentials in `.env` and exclude secrets from git.
+
+## Project Constraints
+
+- No build step required by default.
+- Prefer import maps or CDN module URLs for browser loading.
+- If npm packages are used, keep the runtime output framework-free.
+
+## Recommended File Structure
+
+Use/maintain this structure for the virtual-camera app work:
+
+```text
+src/
+  capture.js
+  compositor.js
+  virtualcam.js
+  recorder.js
+  cloudinary.js
+  gallery.js
+  effects/
+    blob.js
+    drawing.js
+    glitch.js
+    mirror.js
+    ascii.js
+    emoji-filter.js
+    monkey.js
+  ui/
+    controls.js
+    toast.js
+index.html
+main.js
+gallery.html
+```
+
+## Setup Checklist (Phase 0)
+
+Manual setup flow to follow when bootstrapping from scratch:
+
+1. Create folder, open in Cursor, run `git init`.
+2. Run `npm init -y && npm install three`.
+3. Create `.env` with Cloudinary values.
+4. Add `.env` to `.gitignore`.
+5. In Cloudinary dashboard:
+   - Create an unsigned upload preset.
+   - Enable video in allowed resource types.
+   - Record cloud name.
+
+## Cloudinary in Vanilla Mode
+
+- Use Cloudinary REST uploads/delivery for this app mode.
+- Use Cloudinary Video Player SDK for playback pages.
+- Continue applying existing secure upload rules in this file:
+  - No client-side API secret.
+  - Signed uploads require backend signing.
+  - Keep secrets server-side only.
+
 **Scope**: These rules apply to **React (web)** with the browser Upload Widget. The **default** is **Vite** (create-cloudinary-react uses Vite). They also work with **other bundlers** (Create React App, Next.js, Parcel, etc.): only **how you read env vars** changes; see **"Other bundlers (non-Vite)"** below. Rules-only users: see **"Project setup (rules-only / without CLI)"** for the reusable Cloudinary instance, env, Upload Widget (unsigned/signed), and video player. For **React Native** uploads (including signed upload), see: https://cloudinary.com/documentation/react_native_image_and_video_upload#signed_upload — same “never expose secret, generate signature on backend” principle, but React Native uses the `upload()` method and backend SDKs differently.
 
 ## Official Documentation
