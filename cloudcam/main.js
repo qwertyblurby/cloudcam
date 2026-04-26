@@ -8,6 +8,7 @@ import mirrorEffect from './src/effects/mirror.js';
 import asciiEffect from './src/effects/ascii.js';
 import emojiFilterEffect from './src/effects/emoji-filter.js';
 import monkeyEffect from './src/effects/monkey.js';
+import trackingMarkersEffect from './src/effects/tracking-markers.js';
 
 const effects = {
   [blobEffect.name]: blobEffect,
@@ -17,6 +18,7 @@ const effects = {
   [asciiEffect.name]: asciiEffect,
   [emojiFilterEffect.name]: emojiFilterEffect,
   [monkeyEffect.name]: monkeyEffect,
+  [trackingMarkersEffect.name]: trackingMarkersEffect,
 };
 
 function enableEffect(name) {
@@ -34,6 +36,7 @@ function disableEffect(name) {
 
 window.app = {
   compositor,
+  effects,
   enableEffect,
   disableEffect,
 };
