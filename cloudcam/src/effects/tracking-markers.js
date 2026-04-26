@@ -1,114 +1,21 @@
-import { FaceLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
-import { HandLandmarker } from '@mediapipe/tasks-vision';
-import { PoseLandmarker } from '@mediapipe/tasks-vision';
+import trackingService from '../tracking/tracking-service.js';
 
 const trackingMarkersEffect = {
   name: 'tracking-markers',
 
-  faceLandmarker: null,
-  handLandmarker: null,
-  poseLandmarker: null,
-
-  videoEl: null,
-  detectionInterval: 50,
-  detectionTimeout: null,
-
-  lastFaceResults: null,
-  lastHandResults: null,
-  lastPoseResults: null,
-
-  isReady: false,
-  isDetecting: false,
-
+  // Marker rendering settings
   markerColor: '#00ff00',
   markerSize: 3,
   showFace: true,
   showHands: true,
   showPose: true,
   showConnections: true,
+  showMarkers: false,
 
-  async init(canvas, analyser) {
-    this.isReady = false;
-    this.isDetecting = false;
-    this.lastFaceResults = null;
-    this.lastHandResults = null;
-    this.lastPoseResults = null;
-
-    try {
-      const vision = await FilesetResolver.forVisionTasks(
-        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.34/wasm'
-      );
-
-      this.faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
-        baseOptions: {
-          modelAssetPath: '/models/face_landmarker.task',
-          delegate: 'GPU',
-        },
-        runningMode: 'VIDEO',
-        numFaces: 1,
-      });
-
-      this.handLandmarker = await HandLandmarker.createFromOptions(vision, {
-        baseOptions: {
-          modelAssetPath: '/models/hand_landmarker.task',
-          delegate: 'GPU',
-        },
-        runningMode: 'VIDEO',
-        numHands: 2,
-      });
-
-      this.poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
-        baseOptions: {
-          modelAssetPath: '/models/pose_landmarker_lite.task',
-          delegate: 'GPU',
-        },
-        runningMode: 'VIDEO',
-        numPoses: 1,
-      });
-
-      this.isReady = true;
-    } catch (error) {
-      console.error('Failed to initialize MediaPipe landmarkers:', error);
-      this.isReady = false;
-    }
-  },
-
-  startDetectionLoop(videoEl) {
-    if (!this.isReady || this.isDetecting) return;
-    this.videoEl = videoEl;
-    this.isDetecting = true;
-    this.runDetection();
-  },
-
-  async runDetection() {
-    if (!this.isReady || !this.videoEl) {
-      this.isDetecting = false;
-      return;
-    }
-
-    try {
-      const timestamp = performance.now();
-
-      if (this.faceLandmarker && this.showFace) {
-        this.lastFaceResults = this.faceLandmarker.detectForVideo(this.videoEl, timestamp);
-      }
-
-      if (this.handLandmarker && this.showHands) {
-        this.lastHandResults = this.handLandmarker.detectForVideo(this.videoEl, timestamp);
-      }
-
-      if (this.poseLandmarker && this.showPose) {
-        this.lastPoseResults = this.poseLandmarker.detectForVideo(this.videoEl, timestamp);
-      }
-
-      if (window.app) {
-        window.app.lastFaceDetections = this.lastFaceResults?.faceLandmarks || [];
-      }
-    } catch (error) {
-      console.error('Tracking detection failed:', error);
-    }
-
-    this.detectionTimeout = setTimeout(() => this.runDetection(), this.detectionInterval);
+  init(canvas, analyser) {
+    // This effect no longer initializes MediaPipe
+    // Tracking is handled by the tracking service
+    console.log('[Tracking Markers] Effect initialized (rendering only)');
   },
 
   setMarkerColor(color) {
@@ -135,6 +42,21 @@ const trackingMarkersEffect = {
     this.showConnections = show;
   },
 
+  setShowMarkers(show) {
+    this.showMarkers = show;
+  },
+
+  /**
+   * Get tracking results from the tracking service
+   */
+  getTrackingResults() {
+    return {
+      lastFaceResults: trackingService.lastFaceResults,
+      lastHandResults: trackingService.lastHandResults,
+      lastPoseResults: trackingService.lastPoseResults,
+    };
+  },
+
   drawLandmark(ctx, x, y) {
     ctx.beginPath();
     ctx.arc(x, y, this.markerSize, 0, Math.PI * 2);
@@ -149,19 +71,19 @@ const trackingMarkersEffect = {
   },
 
   render(ctx, videoEl, dt) {
-    if (!this.isReady) return;
+    // Only render markers if showMarkers is true
+    if (!this.showMarkers) return;
 
-    if (!this.videoEl) {
-      this.startDetectionLoop(videoEl);
-    }
+    // Get tracking results from the tracking service
+    const { lastFaceResults, lastHandResults, lastPoseResults } = this.getTrackingResults();
 
     ctx.save();
     ctx.fillStyle = this.markerColor;
     ctx.strokeStyle = this.markerColor;
     ctx.lineWidth = 2;
 
-    if (this.showFace && this.lastFaceResults?.faceLandmarks) {
-      for (const faceLandmarks of this.lastFaceResults.faceLandmarks) {
+    if (this.showFace && lastFaceResults?.faceLandmarks) {
+      for (const faceLandmarks of lastFaceResults.faceLandmarks) {
         for (const landmark of faceLandmarks) {
           this.drawLandmark(ctx, landmark.x * 1280, landmark.y * 720);
         }
@@ -189,8 +111,8 @@ const trackingMarkersEffect = {
       }
     }
 
-    if (this.showHands && this.lastHandResults?.landmarks) {
-      for (const handLandmarks of this.lastHandResults.landmarks) {
+    if (this.showHands && lastHandResults?.landmarks) {
+      for (const handLandmarks of lastHandResults.landmarks) {
         for (const landmark of handLandmarks) {
           this.drawLandmark(ctx, landmark.x * 1280, landmark.y * 720);
         }
@@ -218,8 +140,8 @@ const trackingMarkersEffect = {
       }
     }
 
-    if (this.showPose && this.lastPoseResults?.landmarks) {
-      for (const poseLandmarks of this.lastPoseResults.landmarks) {
+    if (this.showPose && lastPoseResults?.landmarks) {
+      for (const poseLandmarks of lastPoseResults.landmarks) {
         for (const landmark of poseLandmarks) {
           this.drawLandmark(ctx, landmark.x * 1280, landmark.y * 720);
         }
@@ -252,30 +174,9 @@ const trackingMarkersEffect = {
   },
 
   destroy() {
-    if (this.detectionTimeout) {
-      clearTimeout(this.detectionTimeout);
-      this.detectionTimeout = null;
-    }
-
-    this.faceLandmarker?.close?.();
-    this.handLandmarker?.close?.();
-    this.poseLandmarker?.close?.();
-
-    this.faceLandmarker = null;
-    this.handLandmarker = null;
-    this.poseLandmarker = null;
-
-    this.videoEl = null;
-    this.lastFaceResults = null;
-    this.lastHandResults = null;
-    this.lastPoseResults = null;
-
-    this.isDetecting = false;
-    this.isReady = false;
-
-    if (window.app) {
-      window.app.lastFaceDetections = [];
-    }
+    // This effect no longer manages tracking lifecycle
+    // Tracking service handles cleanup separately
+    console.log('[Tracking Markers] Effect destroyed');
   },
 };
 

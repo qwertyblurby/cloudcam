@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CloudCam - Camera</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --bg-color: #07090d;
+        --bottom-bar-bg: rgba(255, 255, 255, 0.95);
+        --bottom-bar-border: rgba(14, 165, 233, 0.2);
+        --control-btn-bg: rgba(255, 255, 255, 0.8);
+        --control-btn-border: rgba(14, 165, 233, 0.2);
+        --control-btn-color: #0c4a6e;
+        --control-btn-hover-bg: rgba(14, 165, 233, 0.1);
+        --control-btn-hover-color: #0369a1;
+        --status-dot-bg: #cbd5e1;
+        --effect-pill-bg: rgba(255, 255, 255, 0.8);
+        --effect-pill-border: rgba(14, 165, 233, 0.2);
+        --effect-pill-color: #64748b;
+        --effect-pill-hover-bg: rgba(14, 165, 233, 0.1);
+        --effect-pill-hover-color: #0c4a6e;
+        --effect-pill-active-bg: linear-gradient(to right, #38bdf8, #3b82f6);
+        --drawer-bg: rgba(255, 255, 255, 0.98);
+        --drawer-border: rgba(14, 165, 233, 0.2);
+        --drawer-header-color: #030213;
+        --close-btn-color: #64748b;
+        --close-btn-hover-color: #0c4a6e;
+        --section-bg: rgba(14, 165, 233, 0.05);
+        --section-header-color: #0c4a6e;
+        --section-header-hover-bg: rgba(14, 165, 233, 0.1);
+        --label-color: #64748b;
+        --input-bg: rgba(255, 255, 255, 0.8);
+        --input-border: rgba(14, 165, 233, 0.2);
+        --input-color: #030213;
+        --accent-color: #0ea5e9;
+        --modal-bg: rgba(255, 255, 255, 0.98);
+        --modal-border: rgba(14, 165, 233, 0.2);
+        --modal-overlay-bg: rgba(0, 0, 0, 0.5);
+      }
+
+      body.dark {
+        --bottom-bar-bg: rgba(30, 27, 75, 0.95);
+        --bottom-bar-border: rgba(139, 92, 246, 0.3);
+        --control-btn-bg: rgba(49, 46, 129, 0.8);
+        --control-btn-border: rgba(139, 92, 246, 0.3);
+        --control-btn-color: #c7d2fe;
+        --control-btn-hover-bg: rgba(139, 92, 246, 0.15);
+        --control-btn-hover-color: #e0e7ff;
+        --status-dot-bg: #4c1d95;
+        --effect-pill-bg: rgba(49, 46, 129, 0.8);
+        --effect-pill-border: rgba(139, 92, 246, 0.3);
+        --effect-pill-color: #94a3b8;
+        --effect-pill-hover-bg: rgba(139, 92, 246, 0.15);
+        --effect-pill-hover-color: #c7d2fe;
+        --effect-pill-active-bg: linear-gradient(to right, #818cf8, #a78bfa);
+        --drawer-bg: rgba(30, 27, 75, 0.98);
+        --drawer-border: rgba(139, 92, 246, 0.3);
+        --drawer-header-color: #e0e7ff;
+        --close-btn-color: #94a3b8;
+        --close-btn-hover-color: #c7d2fe;
+        --section-bg: rgba(139, 92, 246, 0.08);
+        --section-header-color: #c7d2fe;
+        --section-header-hover-bg: rgba(139, 92, 246, 0.15);
+        --label-color: #94a3b8;
+        --input-bg: rgba(49, 46, 129, 0.8);
+        --input-border: rgba(139, 92, 246, 0.3);
+        --input-color: #e0e7ff;
+        --accent-color: #a78bfa;
+        --modal-bg: rgba(30, 27, 75, 0.98);
+        --modal-border: rgba(139, 92, 246, 0.3);
+        --modal-overlay-bg: rgba(0, 0, 0, 0.7);
+      }
+
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--bg-color);
+        overflow: hidden;
+        font-family: 'Rubik', sans-serif;
+        transition: background 0.3s ease;
+      }
+
+      #output-canvas {
+        width: 100vw;
+        height: 100vh;
+        display: block;
+        object-fit: cover;
+      }
+
+      #ui-root {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Bottom Bar */
+      #bottom-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: var(--bottom-bar-bg);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid var(--bottom-bar-border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        z-index: 100;
+      }
+
+      .bar-left,
+      .bar-center,
+      .bar-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .bar-center {
+        gap: 6px;
+      }
+
+      .control-btn {
+        padding: 8px 16px;
+        border: 1px solid var(--control-btn-border);
+        border-radius: 9999px;
+        background: var(--control-btn-bg);
+        color: var(--control-btn-color);
+        font-family: 'Rubik', sans-serif;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .control-btn:hover {
+        background: var(--control-btn-hover-bg);
+        border-color: rgba(14, 165, 233, 0.4);
+        color: var(--control-btn-hover-color);
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--status-dot-bg);
+        transition: background 0.3s;
+      }
+
+      .status-dot.active {
+        background: #10b981;
+        box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+      }
+
+      .effect-pill {
+        padding: 6px 14px;
+        border: 1px solid var(--effect-pill-border);
+        border-radius: 9999px;
+        background: var(--effect-pill-bg);
+        color: var(--effect-pill-color);
+        font-family: 'Rubik', sans-serif;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .effect-pill:hover {
+        background: var(--effect-pill-hover-bg);
+        color: var(--effect-pill-hover-color);
+      }
+
+      .effect-pill.active {
+        background: var(--effect-pill-active-bg);
+        border-color: #3b82f6;
+        color: #fff;
+      }
+
+      .rec-btn.recording {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: #ef4444;
+        color: #ef4444;
+        animation: pulse 1s infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+        50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+      }
+
+      .gallery-link {
+        text-decoration: none;
+      }
+
+      .gear-btn {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        justify-content: center;
+        font-size: 16px;
+      }
+
+      /* Side Drawer */
+      #side-drawer {
+        position: fixed;
+        top: 0;
+        right: -280px;
+        width: 280px;
+        height: 100%;
+        background: var(--drawer-bg);
+        backdrop-filter: blur(10px);
+        border-left: 1px solid var(--drawer-border);
+        transition: right 0.3s ease;
+        z-index: 200;
+        display: flex;
+        flex-direction: column;
+      }
+
+      #side-drawer.open {
+        right: 0;
+      }
+
+      .drawer-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        border-bottom: 1px solid var(--drawer-border);
+      }
+
+      .drawer-header h2 {
+        margin: 0;
+        color: var(--drawer-header-color);
+        font-size: 16px;
+        font-family: 'Rubik', sans-serif;
+        font-weight: 600;
+      }
+
+      .close-btn {
+        background: none;
+        border: none;
+        color: var(--close-btn-color);
+        font-size: 24px;
+        cursor: pointer;
+        padding: 0;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .close-btn:hover {
+        color: var(--close-btn-hover-color);
+      }
+
+      .drawer-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+      }
+
+      .control-section {
+        margin-bottom: 16px;
+        border: 1px solid var(--drawer-border);
+        border-radius: 16px;
+        overflow: hidden;
+      }
+
+      .control-section.collapsed .section-body {
+        display: none;
+      }
+
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        background: var(--section-bg);
+        cursor: pointer;
+        color: var(--section-header-color);
+        font-family: 'Rubik', sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .section-header:hover {
+        background: var(--section-header-hover-bg);
+      }
+
+      .collapse-icon {
+        font-size: 10px;
+        transition: transform 0.2s;
+      }
+
+      .control-section.collapsed .collapse-icon {
+        transform: rotate(-90deg);
+      }
+
+      .section-body {
+        padding: 12px;
+      }
+
+      .section-body label {
+        display: block;
+        color: var(--label-color);
+        font-size: 11px;
+        margin-bottom: 6px;
+        font-family: 'Rubik', sans-serif;
+        font-weight: 500;
+      }
+
+      .section-body input[type="range"] {
+        width: 100%;
+        margin-bottom: 12px;
+        accent-color: var(--accent-color);
+      }
+
+      .section-body input[type="text"] {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid var(--input-border);
+        border-radius: 8px;
+        background: var(--input-bg);
+        color: var(--input-color);
+        font-size: 12px;
+        box-sizing: border-box;
+        margin-bottom: 8px;
+        font-family: 'Rubik', sans-serif;
+      }
+
+      .color-swatches {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+      }
+
+      .color-swatch {
+        width: 24px;
+        height: 24px;
+        border-radius: 9999px;
+        border: 1px solid rgba(14, 165, 233, 0.3);
+        cursor: pointer;
+        padding: 0;
+      }
+
+      .color-swatch:hover {
+        transform: scale(1.1);
+      }
+
+      .mode-buttons {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+      }
+
+      .mode-btn {
+        padding: 6px 10px;
+        border: 1px solid var(--control-btn-border);
+        border-radius: 9999px;
+        background: var(--control-btn-bg);
+        color: var(--control-btn-color);
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: 'Rubik', sans-serif;
+        font-weight: 500;
+      }
+
+      .mode-btn:hover {
+        background: var(--control-btn-hover-bg);
+        color: var(--control-btn-hover-color);
+      }
+
+      .clear-btn {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 9999px;
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: 'Rubik', sans-serif;
+        font-weight: 500;
+      }
+
+      .clear-btn:hover {
+        background: rgba(239, 68, 68, 0.2);
+      }
+
+      .radio-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 12px;
+      }
+
+      .radio-group label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        color: var(--label-color);
+        font-family: 'Rubik', sans-serif;
+        font-weight: 500;
+      }
+
+      .radio-group input[type="radio"] {
+        accent-color: var(--accent-color);
+      }
+
+      .emoji-slots {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        margin-bottom: 12px;
+      }
+
+      .face-emojis {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .face-emoji-btn {
+        padding: 6px 10px;
+        border: 1px solid var(--control-btn-border);
+        border-radius: 9999px;
+        background: var(--control-btn-bg);
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .face-emoji-btn:hover {
+        background: var(--control-btn-hover-bg);
+        transform: scale(1.1);
+      }
+
+      .note {
+        color: #94a3b8;
+        font-size: 10px;
+        margin: 8px 0 0 0;
+        font-style: italic;
+      }
+
+      /* Theme Toggle in Drawer */
+      .theme-toggle-section {
+        margin-bottom: 16px;
+        border: 1px solid var(--drawer-border);
+        border-radius: 16px;
+        overflow: hidden;
+      }
+
+      .theme-toggle-btn {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        background: var(--control-btn-bg);
+        color: var(--control-btn-color);
+        font-family: 'Rubik', sans-serif;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s;
+      }
+
+      .theme-toggle-btn:hover {
+        background: var(--control-btn-hover-bg);
+        color: var(--control-btn-hover-color);
+      }
+
+      /* OBS Overlay */
+      #obs-overlay {
+        position: fixed;
+        inset: 0;
+        background: var(--modal-overlay-bg);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .obs-content {
+        background: var(--modal-bg);
+        border-radius: 16px;
+        padding: 24px;
+        max-width: 500px;
+        width: 90%;
+        border: 1px solid var(--modal-border);
+      }
+
+      .obs-content h3 {
+        color: var(--drawer-header-color);
+        margin-top: 0;
+        font-family: 'Rubik', sans-serif;
+        font-weight: 600;
+      }
+
+      .obs-content pre {
+        background: var(--section-bg);
+        padding: 16px;
+        border-radius: 8px;
+        color: var(--section-header-color);
+        font-size: 12px;
+        white-space: pre-wrap;
+        margin: 16px 0;
+        font-family: 'Rubik', sans-serif;
+        border: 1px solid var(--modal-border);
+      }
+
+      .obs-content .close-btn {
+        width: 100%;
+        padding: 10px;
+        background: var(--effect-pill-active-bg);
+        color: #fff;
+        border: none;
+        border-radius: 9999px;
+        cursor: pointer;
+        font-size: 14px;
+        font-family: 'Rubik', sans-serif;
+        font-weight: 500;
+      }
+
+      .obs-content .close-btn:hover {
+        background: linear-gradient(to right, #0ea5e9, #2563eb);
+      }
+    </style>
+  </head>
+  <body>
+    <video id="webcam-source" autoplay playsinline muted hidden></video>
+    <canvas id="output-canvas" width="1280" height="720"></canvas>
+    <div id="ui-root"></div>
+
+    <!-- Publish Modal -->
+    <div id="publish-modal" style="display: none; position: fixed; inset: 0; background: var(--modal-overlay-bg); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
+      <div style="background: var(--modal-bg); border-radius: 16px; padding: 24px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; border: 1px solid var(--modal-border);">
+        <h2 style="color: var(--drawer-header-color); margin-top: 0; font-family: 'Rubik', sans-serif; font-weight: 600;">Publish Video</h2>
+        
+        <video id="video-preview" controls style="width: 100%; border-radius: 12px; margin-bottom: 16px;"></video>
+        
+        <div style="margin-bottom: 16px;">
+          <label style="color: var(--label-color); display: block; margin-bottom: 8px; font-family: 'Rubik', sans-serif; font-weight: 500;">Title</label>
+          <input id="video-title" type="text" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--input-color); box-sizing: border-box; font-family: 'Rubik', sans-serif;">
+        </div>
+
+        <div id="progress-container" style="display: none; margin-bottom: 16px;">
+          <div style="background: var(--section-bg); border-radius: 9999px; height: 8px; overflow: hidden;">
+            <div id="upload-progress" style="background: var(--effect-pill-active-bg); height: 100%; width: 0%; transition: width 0.3s;"></div>
+          </div>
+          <p style="color: var(--label-color); font-size: 12px; margin-top: 4px; font-family: 'Rubik', sans-serif;">Uploading...</p>
+        </div>
+
+        <div id="success-container" style="display: none;">
+          <div id="video-player-container" style="margin-bottom: 16px;"></div>
+          <div id="transformation-buttons" style="margin-bottom: 16px;"></div>
+          <div style="display: flex; gap: 8px;">
+            <button id="copy-link-btn" style="flex: 1; padding: 10px; border-radius: 9999px; border: none; background: var(--effect-pill-active-bg); color: white; cursor: pointer; font-family: 'Rubik', sans-serif; font-weight: 500;">Copy Link</button>
+            <button id="save-gallery-btn" style="flex: 1; padding: 10px; border-radius: 9999px; border: none; background: #10b981; color: white; cursor: pointer; font-family: 'Rubik', sans-serif; font-weight: 500;">Save to Gallery</button>
+          </div>
+          <button id="close-modal-btn" style="width: 100%; padding: 10px; border-radius: 9999px; border: none; background: #cbd5e1; color: #030213; cursor: pointer; margin-top: 8px; font-family: 'Rubik', sans-serif; font-weight: 500;">Close</button>
+        </div>
+
+        <div id="action-buttons" style="display: flex; gap: 8px; margin-top: 16px;">
+          <button id="publish-btn" style="flex: 1; padding: 12px; border-radius: 9999px; border: none; background: var(--effect-pill-active-bg); color: white; cursor: pointer; font-weight: 600; font-family: 'Rubik', sans-serif;">Publish to Cloudinary</button>
+          <button id="discard-btn" style="flex: 1; padding: 12px; border-radius: 9999px; border: none; background: #ef4444; color: white; cursor: pointer; font-weight: 600; font-family: 'Rubik', sans-serif;">Discard</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/main.js"></script>
+    <script type="module" src="/src/ui/controls.js"></script>
+  </body>
+</html>

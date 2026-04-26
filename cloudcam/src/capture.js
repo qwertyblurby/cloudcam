@@ -51,8 +51,7 @@ export async function getAudioAnalyser() {
     analyser.smoothingTimeConstant = 0.8;
     source.connect(analyser);
 
-    const dataArray = new Uint8Array(analyser.frequencyBinCount);
-    return { analyser, dataArray };
+    return analyser;
   } catch (error) {
     if (
       error instanceof DOMException &&

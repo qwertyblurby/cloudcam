@@ -1,4 +1,5 @@
 const MODE_HORIZONTAL = 'horizontal';
+const MODE_VERTICAL = 'vertical';
 const MODE_QUAD = 'quad';
 const MODE_KALEIDOSCOPE = 'kaleidoscope';
 
@@ -16,15 +17,23 @@ const mirrorEffect = {
   },
 
   render(ctx, videoEl, dt) {
-    // Draw base video first
-    ctx.drawImage(videoEl, 0, 0, 1280, 720);
-
     if (this.mode === MODE_HORIZONTAL) {
+      // Draw left half
+      ctx.drawImage(videoEl, 0, 0, 640, 720, 0, 0, 640, 720);
+      // Mirror left half to right half
       ctx.save();
       ctx.translate(1280, 0);
       ctx.scale(-1, 1);
-      // Draw left half mirrored to right half
       ctx.drawImage(videoEl, 0, 0, 640, 720, 0, 0, 640, 720);
+      ctx.restore();
+    } else if (this.mode === MODE_VERTICAL) {
+      // Draw top half
+      ctx.drawImage(videoEl, 0, 0, 1280, 360, 0, 0, 1280, 360);
+      // Mirror top half to bottom half
+      ctx.save();
+      ctx.translate(0, 720);
+      ctx.scale(1, -1);
+      ctx.drawImage(videoEl, 0, 0, 1280, 360, 0, 0, 1280, 360);
       ctx.restore();
     } else if (this.mode === MODE_QUAD) {
       // Top-left: normal

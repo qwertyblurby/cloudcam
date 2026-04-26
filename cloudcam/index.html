@@ -3,35 +3,384 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>cloudcam compositor</title>
+    <title>CloudCam - Your Camera, Supercharged</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-      html,
-      body {
+      :root {
+        --bg-gradient: linear-gradient(135deg, #ffffff 0%, #f0f9ff 50%, #dbeafe 100%);
+        --text-color: #030213;
+        --blob-1-bg: rgba(14, 165, 233, 0.3);
+        --blob-2-bg: rgba(59, 130, 246, 0.3);
+        --logo-gradient: linear-gradient(to right, #0ea5e9, #3b82f6, #2563eb);
+        --tagline-color: #0c4a6e;
+        --cta-bg: linear-gradient(to right, #38bdf8, #3b82f6);
+        --cta-shadow: rgba(14, 165, 233, 0.4);
+        --cta-hover-shadow: rgba(14, 165, 233, 0.5);
+        --effect-tag-bg: rgba(255, 255, 255, 0.8);
+        --effect-tag-border: rgba(14, 165, 233, 0.2);
+        --effect-tag-color: #0c4a6e;
+        --feature-card-bg: rgba(255, 255, 255, 0.9);
+        --feature-card-border: rgba(14, 165, 233, 0.2);
+        --feature-title-color: #030213;
+        --feature-desc-color: #64748b;
+        --footer-color: #0ea5e9;
+        --footer-span-color: #0369a1;
+        --toggle-bg: rgba(255, 255, 255, 0.8);
+        --toggle-border: rgba(14, 165, 233, 0.2);
+        --toggle-color: #0c4a6e;
+      }
+
+      body.dark {
+        --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+        --text-color: #e0e7ff;
+        --blob-1-bg: rgba(99, 102, 241, 0.3);
+        --blob-2-bg: rgba(139, 92, 246, 0.3);
+        --logo-gradient: linear-gradient(to right, #818cf8, #a78bfa, #c084fc);
+        --tagline-color: #c7d2fe;
+        --cta-bg: linear-gradient(to right, #818cf8, #a78bfa);
+        --cta-shadow: rgba(99, 102, 241, 0.4);
+        --cta-hover-shadow: rgba(139, 92, 246, 0.5);
+        --effect-tag-bg: rgba(30, 27, 75, 0.8);
+        --effect-tag-border: rgba(139, 92, 246, 0.3);
+        --effect-tag-color: #c7d2fe;
+        --feature-card-bg: rgba(30, 27, 75, 0.8);
+        --feature-card-border: rgba(139, 92, 246, 0.3);
+        --feature-title-color: #e0e7ff;
+        --feature-desc-color: #94a3b8;
+        --footer-color: #a78bfa;
+        --footer-span-color: #818cf8;
+        --toggle-bg: rgba(30, 27, 75, 0.8);
+        --toggle-border: rgba(139, 92, 246, 0.3);
+        --toggle-color: #c7d2fe;
+      }
+
+      * {
         margin: 0;
-        width: 100%;
-        height: 100%;
-        background: #07090d;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Rubik', sans-serif;
+        background: var(--bg-gradient);
+        color: var(--text-color);
+        min-height: 100vh;
+        overflow-x: hidden;
+        transition: background 0.3s ease, color 0.3s ease;
+      }
+
+      .hero {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+        position: relative;
+      }
+
+      /* Animated background blobs */
+      .blob-1 {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        width: 384px;
+        height: 384px;
+        background: var(--blob-1-bg);
+        border-radius: 50%;
+        filter: blur(48px);
+        animation: pulse 3s ease-in-out infinite;
+      }
+
+      .blob-2 {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        width: 384px;
+        height: 384px;
+        background: var(--blob-2-bg);
+        border-radius: 50%;
+        filter: blur(48px);
+        animation: pulse 3s ease-in-out infinite;
+        animation-delay: 1s;
+      }
+
+      @keyframes pulse {
+        0%, 100% {
+          transform: scale(1);
+          opacity: 0.3;
+        }
+        50% {
+          transform: scale(1.1);
+          opacity: 0.5;
+        }
+      }
+
+      .hero-content {
+        text-align: center;
+        max-width: 800px;
+        z-index: 10;
+      }
+
+      .logo {
+        font-size: 84px;
+        font-weight: 700;
+        margin-bottom: 16px;
+        background: var(--logo-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .tagline {
+        font-size: 20px;
+        color: var(--tagline-color);
+        margin-bottom: 40px;
+        font-weight: 500;
+        line-height: 1.6;
+      }
+
+      .cta-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 48px;
+        background: var(--cta-bg);
+        border: none;
+        border-radius: 9999px;
+        color: #fff;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        box-shadow: 0 10px 25px var(--cta-shadow);
+        position: relative;
         overflow: hidden;
       }
 
-      #output-canvas {
-        width: 100vw;
-        height: 100vh;
-        display: block;
-        object-fit: cover;
+      .cta-button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 15px 35px var(--cta-hover-shadow);
       }
 
-      #ui-root {
-        position: fixed;
+      .cta-button:active {
+        transform: scale(1);
+      }
+
+      .cta-button::after {
+        content: '';
+        position: absolute;
         inset: 0;
-        pointer-events: none;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 9999px;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+
+      .cta-button:hover::after {
+        opacity: 1;
+      }
+
+      .effects-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 32px;
+        z-index: 10;
+      }
+
+      .effect-tag {
+        padding: 8px 20px;
+        background: var(--effect-tag-bg);
+        border: 1px solid var(--effect-tag-border);
+        border-radius: 9999px;
+        font-size: 13px;
+        color: var(--effect-tag-color);
+        font-weight: 500;
+      }
+
+      .features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 24px;
+        max-width: 1000px;
+        margin: 60px auto 0;
+        padding: 0 20px;
+        z-index: 10;
+      }
+
+      .feature-card {
+        background: var(--feature-card-bg);
+        border: 1px solid var(--feature-card-border);
+        border-radius: 24px;
+        padding: 32px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      }
+
+      .feature-card:hover {
+        transform: translateY(-8px);
+        border-color: rgba(14, 165, 233, 0.4);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      }
+
+      .feature-icon {
+        font-size: 40px;
+        margin-bottom: 16px;
+      }
+
+      .feature-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--feature-title-color);
+      }
+
+      .feature-desc {
+        font-size: 14px;
+        color: var(--feature-desc-color);
+        line-height: 1.6;
+      }
+
+      .footer {
+        position: absolute;
+        bottom: 24px;
+        left: 24px;
+        color: var(--footer-color);
+        font-size: 14px;
+        z-index: 10;
+      }
+
+      .footer span {
+        font-weight: 600;
+        color: var(--footer-span-color);
+      }
+
+      .theme-toggle {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        padding: 10px 16px;
+        background: var(--toggle-bg);
+        border: 1px solid var(--toggle-border);
+        border-radius: 9999px;
+        color: var(--toggle-color);
+        font-family: 'Rubik', sans-serif;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+      }
+
+      .theme-toggle:hover {
+        transform: scale(1.05);
+      }
+
+      @media (max-width: 768px) {
+        .logo {
+          font-size: 48px;
+        }
+
+        .tagline {
+          font-size: 16px;
+        }
+
+        .cta-button {
+          padding: 14px 36px;
+          font-size: 15px;
+        }
+
+        .features {
+          grid-template-columns: 1fr;
+        }
+
+        .blob-1, .blob-2 {
+          width: 200px;
+          height: 200px;
+        }
       }
     </style>
   </head>
   <body>
-    <video id="webcam-source" autoplay playsinline muted hidden></video>
-    <canvas id="output-canvas" width="1280" height="720"></canvas>
-    <div id="ui-root"></div>
-    <script type="module" src="/main.js"></script>
+    <div class="hero">
+      <div class="blob-1"></div>
+      <div class="blob-2"></div>
+      
+      <div class="hero-content">
+        <div class="logo">CloudCam</div>
+        <p class="tagline">Your camera, supercharged with filters, video & virtual webcam</p>
+        
+        <a href="camera.html" class="cta-button">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+            <circle cx="12" cy="13" r="4"></circle>
+          </svg>
+          Open Camera
+        </a>
+      </div>
+
+      <div class="features">
+        <div class="feature-card">
+          <div class="feature-icon">🎨</div>
+          <div class="feature-title">Real-time Effects</div>
+          <div class="feature-desc">Apply stunning effects to your webcam feed instantly with zero latency</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎬</div>
+          <div class="feature-title">Record & Share</div>
+          <div class="feature-desc">Record your sessions and upload directly to Cloudinary with one click</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📺</div>
+          <div class="feature-title">Virtual Camera</div>
+          <div class="feature-desc">Use as a virtual camera source in OBS, Zoom, or any streaming app</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🖼️</div>
+          <div class="feature-title">Gallery</div>
+          <div class="feature-desc">Browse and manage all your published clips in one place</div>
+        </div>
+      </div>
+
+      <div class="footer">
+        Powered by <span>Cloudinary</span>
+      </div>
+
+      <button class="theme-toggle" id="theme-toggle">
+        <span id="theme-icon">🌙</span>
+        <span id="theme-text">Dark</span>
+      </button>
+    </div>
+
+    <script>
+      const themeToggle = document.getElementById('theme-toggle');
+      const themeIcon = document.getElementById('theme-icon');
+      const themeText = document.getElementById('theme-text');
+
+      function setTheme(isDark) {
+        document.body.classList.toggle('dark', isDark);
+        themeIcon.textContent = isDark ? '☀️' : '🌙';
+        themeText.textContent = isDark ? 'Light' : 'Dark';
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      }
+
+      themeToggle.addEventListener('click', () => {
+        const isDark = !document.body.classList.contains('dark');
+        setTheme(isDark);
+      });
+
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark') {
+        setTheme(true);
+      }
+    </script>
   </body>
 </html>

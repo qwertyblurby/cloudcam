@@ -11,10 +11,67 @@ const drawingEffect = {
   particles: [],
   mode: MODE_GLOW,
   canvas: null,
+  useFingerTracking: false,
+  trackingEffect: null,
+  lastFingerPos: null,
+  isDrawing: false,
+  currentStroke: null,
 
   init(canvas, analyser) {
     this.canvas = canvas;
     this.setupPointerListeners(canvas);
+  },
+
+  setUseFingerTracking(use) {
+    this.useFingerTracking = use;
+  },
+
+  setTrackingEffect(effect) {
+    this.trackingEffect = effect;
+  },
+
+  getIndexFingerPosition() {
+    // Prefer tracking service, fall back to trackingEffect for backward compatibility
+    const tracking = window.app?.trackingService || this.trackingEffect;
+    if (!tracking || !tracking.lastHandResults?.landmarks) {
+      return null;
+    }
+
+    // Get the first detected hand
+    const handLandmarks = tracking.lastHandResults.landmarks[0];
+    if (!handLandmarks) return null;
+
+    // Index finger tip is landmark 8 in MediaPipe hand landmarks
+    const indexFingerTip = handLandmarks[8];
+    const indexFingerBase = handLandmarks[5]; // Base of index finger
+    const wrist = handLandmarks[0]; // Wrist
+
+    if (!indexFingerTip || !indexFingerBase || !wrist) return null;
+
+    // Check if hand is balled up (fist)
+    // Calculate distance between index finger tip and wrist
+    const tipToWristDist = Math.hypot(
+      indexFingerTip.x - wrist.x,
+      indexFingerTip.y - wrist.y
+    );
+
+    // Calculate distance between index finger base and wrist (for reference)
+    const baseToWristDist = Math.hypot(
+      indexFingerBase.x - wrist.x,
+      indexFingerBase.y - wrist.y
+    );
+
+    // If tip is very close to wrist compared to base, finger is folded (fist)
+    // Threshold: if tip is less than 1.3x the base-to-wrist distance, it's folded
+    if (tipToWristDist < baseToWristDist * 1.3) {
+      return null; // Hand is balled up, don't draw
+    }
+
+    // Convert normalized coordinates (0-1) to canvas coordinates (1280x720)
+    return {
+      x: indexFingerTip.x * this.canvas.width,
+      y: indexFingerTip.y * this.canvas.height,
+    };
   },
 
   setupPointerListeners(canvas) {
@@ -176,6 +233,54 @@ const drawingEffect = {
   render(ctx, videoEl, dt) {
     const now = Date.now();
 
+    // Handle finger tracking drawing
+    if (this.useFingerTracking) {
+      const fingerPos = this.getIndexFingerPosition();
+
+      if (fingerPos) {
+        if (!this.isDrawing) {
+          // Start new stroke
+          this.isDrawing = true;
+          this.currentStroke = {
+            points: [{ x: fingerPos.x, y: fingerPos.y }],
+            color: this.getRandomColor(),
+            width: 4,
+            createdAt: Date.now(),
+            opacity: 1,
+          };
+          this.lastFingerPos = fingerPos;
+        } else {
+          // Continue drawing
+          const distance = Math.hypot(
+            fingerPos.x - this.lastFingerPos.x,
+            fingerPos.y - this.lastFingerPos.y
+          );
+
+          if (distance > 3) {
+            const lastPoint = this.currentStroke.points[this.currentStroke.points.length - 1];
+            this.currentStroke.points.push({ x: fingerPos.x, y: fingerPos.y });
+
+            // Apply brush mode effects
+            if (this.mode === MODE_SPARKLE) {
+              this.spawnSparkles(lastPoint.x, lastPoint.y, fingerPos.x, fingerPos.y, this.currentStroke.color);
+            } else if (this.mode === MODE_HEARTBEAT) {
+              this.addHeartbeatSpike(this.currentStroke, lastPoint, { x: fingerPos.x, y: fingerPos.y });
+            }
+
+            this.lastFingerPos = fingerPos;
+          }
+        }
+      } else {
+        // No finger detected, end current stroke
+        if (this.isDrawing && this.currentStroke && this.currentStroke.points.length > 1) {
+          this.strokes.push(this.currentStroke);
+        }
+        this.isDrawing = false;
+        this.currentStroke = null;
+        this.lastFingerPos = null;
+      }
+    }
+
     // Age out strokes
     for (let i = this.strokes.length - 1; i >= 0; i--) {
       const stroke = this.strokes[i];
@@ -252,7 +357,7 @@ const drawingEffect = {
       ctx.restore();
     }
 
-    // Render current strokes being drawn
+    // Render current strokes being drawn (mouse/pointer)
     for (const [pointerId, pointerData] of this.currentStrokes) {
       const stroke = pointerData.stroke;
       if (stroke.points.length < 2) continue;
@@ -286,6 +391,54 @@ const drawingEffect = {
       ctx.strokeStyle = stroke.color;
       ctx.stroke();
       ctx.restore();
+    }
+
+    // Render current stroke from finger tracking
+    if (this.useFingerTracking && this.currentStroke && this.currentStroke.points.length >= 1) {
+      const stroke = this.currentStroke;
+
+      if (stroke.points.length >= 2) {
+        // Glow pass
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+        for (let i = 1; i < stroke.points.length; i++) {
+          ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+        }
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = stroke.width * 4;
+        ctx.globalAlpha = 0.25;
+        ctx.strokeStyle = stroke.color;
+        ctx.stroke();
+        ctx.restore();
+
+        // Core pass
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+        for (let i = 1; i < stroke.points.length; i++) {
+          ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+        }
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = stroke.width;
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = stroke.color;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Draw cursor at current finger position
+      if (this.lastFingerPos) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(this.lastFingerPos.x, this.lastFingerPos.y, 8, 0, Math.PI * 2);
+        ctx.fillStyle = stroke.color;
+        ctx.globalAlpha = 0.5;
+        ctx.fill();
+        ctx.restore();
+      }
     }
 
     // Render particles
@@ -329,6 +482,11 @@ const drawingEffect = {
     this.strokes = [];
     this.currentStrokes.clear();
     this.particles = [];
+    this.isDrawing = false;
+    this.currentStroke = null;
+    this.lastFingerPos = null;
+    // Note: useFingerTracking and trackingEffect are preserved for re-enable
+    // Tracking data comes from window.app.trackingService
   },
 };
 
