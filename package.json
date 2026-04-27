@@ -1,0 +1,25 @@
+{
+  "name": "cloudcam",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qwertyblurby/cloudcam.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/qwertyblurby/cloudcam/issues"
+  },
+  "homepage": "https://github.com/qwertyblurby/cloudcam#readme",
+  "dependencies": {
+    "cloudinary": "^2.10.0",
+    "three": "^0.184.0"
+  }
+}
